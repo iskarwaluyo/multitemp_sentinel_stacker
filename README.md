@@ -190,8 +190,9 @@ ndvi_signature_plots_season
 index_month_year(ndvi_df_melt, "NDVI")
 index_season_year(ndvi_df_melt, "NDVI")
 ```
-![indexplotsb](images/000003b.png)
 ![indexplotsc](images/000003d.png)
+
+![indexplotsb](images/000003b.png)
 
 ## PART IV: Simple Plots of Indexes
 
