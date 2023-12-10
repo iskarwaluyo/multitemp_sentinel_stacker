@@ -149,7 +149,7 @@ index_plotter('mbi', 13, 'diverge_hcl', 'Berlin', FALSE, 100)
 index_plotter('ndbi', 13, 'diverge_hcl', 'Vik', FALSE, 100)
 index_plotter('baei', 13, 'diverge_hcl', 'Purple-Brown', FALSE, 100)
 ```
-![indexplots]images/00001c.png
+![indexplots](images/00001c.png)
 
 ## PART III: Multi-temporal Stack Data Exploration
 
@@ -190,6 +190,9 @@ ndvi_signature_plots_season
 index_month_year(ndvi_df_melt, "NDVI")
 index_season_year(ndvi_df_melt, "NDVI")
 ```
+![indexplots](images/00003b.png)
+![indexplots](images/00003c.png)
+
 ## PART IV: Simple Plots of Indexes
 
 RUN SCRPT: 04_INDEX_MULTITEMPORAL_UNIVARIATE_PLOTS.R
