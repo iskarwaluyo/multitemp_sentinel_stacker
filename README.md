@@ -111,7 +111,7 @@ par(mfrow = c(1, 2))
 color_plot_singles(1) # RGB PLOTS OF FIRST LAYER OF STACK
 color_plot_singles(2) # RGB PLOTS OF SEDOND LAYER OF STACK
 ```
-![](images/000003.png)
+![rgbplots](images/000003.png)
 ## PART II: Calculate Spectral Indexes
 
 RUN SCRIPT: 02_INDEX_CALCULATION.R
@@ -149,6 +149,7 @@ index_plotter('mbi', 13, 'diverge_hcl', 'Berlin', FALSE, 100)
 index_plotter('ndbi', 13, 'diverge_hcl', 'Vik', FALSE, 100)
 index_plotter('baei', 13, 'diverge_hcl', 'Purple-Brown', FALSE, 100)
 ```
+![indexplots]images/00001c.png
 
 ## PART III: Multi-temporal Stack Data Exploration
 
