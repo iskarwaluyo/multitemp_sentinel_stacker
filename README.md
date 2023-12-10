@@ -12,6 +12,57 @@ The scripts are divided in four parts:
 4. 04_INDEX_MULTITEMPORAL_UNIVARIATE_PLOTS.R - Creates violin plots that compare the mean index values by month, year and season. 
 5. 05_INDEX_MULTITEMPORAL_UNIVARIATE_STATISTICS.R - Creates tables that compare the mean index values by month, year and season.
 
-# PART 0: Directory and data setup
+## PART 0: Directory and data setup
 
-## Directory setup
+### Directory setup
+
+Before running the code, it is recommended to set up a project directory with 3 sub directories as follows, although, the code can be adjusted as the user prefers. 
+
+- Directory 0: Project directory 
+- Directory 1: Create a directory named 'RASTER' where user stores all downloaded Sentinel2A files. 
+- Directory 2: Create a directory named 'SIG' where user stores shape files of the region of interest (ROI) that are used to clip the raster images
+- Directory 3: Create a directory named 'RDATA' where the code will save RData files contaning objects of each step
+
+The first lines of the first script set up these directories as follows:
+
+```{r, eval = FALSE, echo = FALSE}
+# DIRECTORY 0: PROJECT DIRECTORY
+main_dir <- "CONTAINS R SCRIPTS AND DATA"
+
+# DIRECTORY 1: RASTER DATA DIRECTORY
+raster_dir <- "CONTAINS SENTINEL 2A RASTERS"
+
+# DIRECTORY 2: GIS DATA DIRECTORY
+sig_dir <- "CONTAINS REGION OF INTEREST VECTOR DATA"
+
+# DIRECTORY TO STORE RESULTS
+results_dir <- "CONTAINS SCRIPS RESULTS"
+```
+
+Directories can have different names, but be sure to adjust the code to read the files. 
+
+### Data setup
+
+Download and decompress Sentinel 2A data into the 'RASTER' directory. The demo uses 34 Sentinel 2A MSI level 1-C images downloaded from Copernicus Hub from orbit 69 between 2015 and 2023, with a maximum cloud coverage of 10%. 
+
+Download demo raster data: [DEMO_RASTER DATA]()
+Download demo GIS data: [DEMO GIS DATA](https://drive.google.com/file/d/1sDa7dLhdUKk3AytIihkT5dZwX6pB-ieY/view?usp=sharing)
+Download demo RData data: [DEMO RDATA](https://drive.google.com/file/d/1hxbWovXeKH0vcjZcxpSC1ozv-l9XWC-R/view?usp=sharing)
+
+For more information about Sentinel 2A level 1-C images: [SENTINEL 2A](https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/product-types/level-1c)
+
+Create a shape file of the boundaries of your region of interest and save it to the 'SIG' directory. The shape file provided for the demo is for the Ejidos of Xochimilco and San Gregorio Atlapulco in Xochimilco, Mexico City. 
+
+Download sample ROI shape file: [LINK]
+
+All R scripts should be placed in the project directory. Remember to configure your directories as explained above. 
+
+## PART I: Multitemporal Stack Tools for Sentinel 2 images
+
+RUN SCRIPT: 01_RASTER_STACK.R
+
+This first part of code searches a directory for Sentinel 2A multispectral data, extracts the raster images and stacks them according to sensing timestamp. This is done by extracting time sensing dates from the meta data and using the 'raster' package to restack all the images of a chosen badwidth in one multi-temporal stack. This is programmed into a function called 'multitemporal_stacker' which accepts three arguments:
+
+- band - Bandwidth of interest. Can be any of the bandwiths included in Sentinel2A images (B01, B02, B03, B04, B05, B06, B07, B08, B08A, B09, B10, B11 or B12)
+- file_dir - Sentinel2A image directory inside of the RASTER directory where the images are stored. NOTE: do not modify the contents of the Sentinel2A images. 
+- roi - Name of shape file in the SIG directory that will be used to clip the Sentinel2A raster files.
