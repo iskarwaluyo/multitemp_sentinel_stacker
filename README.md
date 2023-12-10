@@ -46,7 +46,9 @@ Directories can have different names, but be sure to adjust the code to read the
 Download and decompress Sentinel 2A data into the 'RASTER' directory. The demo uses 34 Sentinel 2A MSI level 1-C images downloaded from Copernicus Hub from orbit 69 between 2015 and 2023, with a maximum cloud coverage of 10%. 
 
 Download demo raster data: [DEMO_RASTER DATA]()
+
 Download demo GIS data: [DEMO GIS DATA](https://drive.google.com/file/d/1sDa7dLhdUKk3AytIihkT5dZwX6pB-ieY/view?usp=sharing)
+
 Download demo RData data: [DEMO RDATA](https://drive.google.com/file/d/1hxbWovXeKH0vcjZcxpSC1ozv-l9XWC-R/view?usp=sharing)
 
 For more information about Sentinel 2A level 1-C images: [SENTINEL 2A](https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/product-types/level-1c)
