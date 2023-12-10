@@ -182,3 +182,52 @@ index_signature_grids("ndvi", TRUE)
 ndvi_signature_plots_month
 ndvi_signature_plots_season
 ```
+```{r}
+# USES THE INDEX DATA IN LONG FORMAT
+index_month_year(ndvi_df_melt, "NDVI")
+index_season_year(ndvi_df_melt, "NDVI")
+```
+## PART IV: Simple Plots of Indexes
+
+RUN SCRPT: 04_INDEX_MULTITEMPORAL_UNIVARIATE_PLOTS.R
+
+With the spectral indexes transformed to long format dataframes, it is possible to make different types of plots to compare the mean values. This script creates a grid of violin plots allowing comparison of mean index values by year, month and season.
+
+```{r univariate_plots, fig.width=unit(20,"cm"), fig.height=unit(12,"cm")}
+index_mean_plotter('ndvi', 'year')
+index_mean_plotter('ndmi', 'year')
+
+grid.arrange(ndvi_melt_p, ndmi_melt_p, ncol = 2)
+
+# SEASON PLOTS FOR NDVI
+index_mean_plotter('ndvi', 'season')
+ndvi_melt_p
+```
+## PART V: Univariate Statistics of Indexes
+
+RUN SCRIPT: 05_INDEX_MULTITEMPORAL_UNIVARIATE_STATISTICS.R
+
+Finally, the following scripts use univariate statistics to compare the values of the indexes by month, year and season. The function 'index_univariate_stats' creates a dataframe that compares al data by month and year. For brevity only NDVI is demonstrated.
+
+```{r univariate_stats, tidy.opts = list(width.cutoff = 300), tidy = TRUE}
+index_univariate_stats(ndvi_df_melt)
+univariate_stats
+```
+
+The function 'raster_stack_univariate' creates a univariate statistic comparison table that can be used to evaluate differences between indexes by month, year and season for the multitemporal stacks. Again, for brevity, this demonstration only runs the function for NDVI.
+
+```{r}
+raster_stack_univariate(ndvi_df_melt)
+year_univariate
+month_univariate
+season_univariate
+```
+
+The 'raster_ttest' uses the long format data of the rasters to perform a t-test of the mean index values for any given month by years. This code statistically compares each month by year. For brevity only NDVI is compared for months of April and November. It's worth noting that this compares all data of years available. If there is no data available for any given year, it will not appear in the results. 
+
+```{r}
+raster_ttest(ndvi_df_melt, '04')
+raster_ttest(ndvi_df_melt, '11')
+setwd(main_dir)
+```
+
