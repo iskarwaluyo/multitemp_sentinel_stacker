@@ -111,7 +111,7 @@ par(mfrow = c(1, 2))
 color_plot_singles(1) # RGB PLOTS OF FIRST LAYER OF STACK
 color_plot_singles(2) # RGB PLOTS OF SEDOND LAYER OF STACK
 ```
-
+![](images/000003.png)
 ## PART II: Calculate Spectral Indexes
 
 RUN SCRIPT: 02_INDEX_CALCULATION.R
