@@ -6,18 +6,18 @@ library(colorspace)
 
 # CREATE DIRECTORY PATHS
 # MAIN ENVIRONMENT DIRECTORY
-main_dir <- "~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/R"
+main_dir <- "~/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/R"
 # GIS DATA DIRECTORY
-sig_dir <- "~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/SIG/"
+sig_dir <- "~/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/SIG"
 # RASTER DATA DIRECTORY
-raster_dir <- "~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RASTER/"
+raster_dir <- "~/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RASTER/"
 # DIRECTORY TO STORE RESULTS
-results_dir <- "~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/RESULTS/"
+results_dir <- "~/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/RESULTS/"
 
 # FUNCTION I: MULTITEMPORAL STACKER
 # MAKES STACKS OF SAME BANDWIDTH AND DIFFERENT BANDWIDTHS
 
-multitemporal_stacker <- function(band, file_dir, roi){
+multitemporal_stacker <- function(file_dir, roi){
 
   setwd(sig_dir)
   ROI <<- geojson_sf(paste0(roi,'.geojson'))
@@ -25,16 +25,21 @@ multitemporal_stacker <- function(band, file_dir, roi){
   
   setwd(main_dir)
   
-  raster_stack <- ""
-  brick_stack <- ""
-  
+  brick_stack_clipped <<- ''
+  brick_stack <<- ''
+  bricks <<- ''
+  band_names <- c('B01', 'B02', 'B03', 'B04')
+
+  for(j in 1:length(band_names)){
+    
   setwd(raster_dir)
   setwd(paste0('./', file_dir, '/'))
   
   dir_list <- ""
   dir_list <- list.files(pattern="", full.names=TRUE)
-  files <- ""
-  band_name <- band
+  files <<- ""
+  
+  band_name <- band_names[[j]]
 
   n <- as.numeric(length(dir_list))
   m <<- as.numeric(length(dir_list))
@@ -64,47 +69,56 @@ multitemporal_stacker <- function(band, file_dir, roi){
     setwd(y)
     setwd("./IMG_DATA")
     
-    file_i <<- list.files(pattern = band, full.names=TRUE)
+    files <<- list.files(pattern = band_names[[j]], full.names=TRUE)
+    bricks[i] <<- lapply(files, brick)
     
-    brick_stack[i] <- lapply(file_i, brick)
-    # raster_stack[i] <<- lapply(file_i, readGDAL)
   }
   
-  comando <<- paste0(band_name, " <<- stack(brick_stack)")
+  brick_stack[j] <<- list(bricks)
+  comando <<- paste0(band_names[[j]], " <<- stack(bricks)")
   eval(parse(text = comando))
   
   # SET CRS/PROJECTION
-  crs(ROI) <- st_crs(brick_stack)
+  crs(ROI) <- st_crs(bricks)
   
   # CROP
-  comando <<- paste0(band_name, " <<- crop(",band_name,", ROI)")
+  comando <<- paste0(band_names[[j]], " <<- crop(",band_name,", ROI)")
   eval(parse(text = comando))
   
   # MASK
-   comando <<- paste0(band_name, " <<- mask(",band_name,", ROI)")
-   eval(parse(text = comando))
+  comando <<- paste0(band_names[[j]], " <<- mask(",band_name,", ROI)")
+  eval(parse(text = comando))
   
   # RENAME USING DATES
-  comando <<- paste0("names(",band_name, ") <<- time_line")
+  comando <<- paste0("names(",band_names[[j]], ") <<- time_line")
   eval(parse(text = comando))
-
+  
+  }
+  
+  setwd(sig_dir)
 }
 
-# COMPOSITE COLOR PLOTS
-color_plot_singles <- function(img_number)
+multitemporal_stacker("Xochimilco", "ROI")
+
+
+color_plots <- function(img_number)
 {
+  par(mfrow = c(1, 2))
   true_color <- stack(B04[[img_number]],B03[[img_number]],B02[[img_number]])
   false_color <- stack(B08[[img_number]],B04[[img_number]],B03[[img_number]])
   
-  plotRGB(true_color,
-          r=1,g=2,b=3, 
-          stretch = "lin")
-  
-  plotRGB(false_color,
-          r=1,g=2,b=3, 
-          stretch = "lin")
+  plotRGB(true_color, r=1,g=2,b=3, stretch = "lin")
+  plotRGB(false_color, r=1,g=2,b=3, stretch = "lin")
+  par(mfrow = c(1,1))
 }
 
-save(multitemporal_stacker, color_plot_singles, 
+
+# EXAMPLE
+
+color_plots(1) # RGB PLOTS OF FIRST LAYER OF STACK
+color_plots(2) # RGB PLOTS OF SEDOND LAYER OF STACK
+
+
+save(multitemporal_stacker, color_plots, 
      main_dir, sig_dir, raster_dir, results_dir, 
      file = '~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/RASTER_STACK.RData')
