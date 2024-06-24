@@ -9,6 +9,7 @@ library(data.table)
 library(gridExtra)
 library(plyr)
 library(summarytools)
+library(broom)
 
 
 # ONLY RUN TO LOAD SAMPLE DATA. 
@@ -16,40 +17,24 @@ library(summarytools)
 # load("~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/RASTER_STACK.RData")
 # load("~/sigdata/archivos2/sigdata/PROYECTOS/CHINAMPAS/DATA/RDATA/INDEX_MELT_DATA.RData")
 
-index_univariate_stats <- function(index_melt){
-  
-  univariate_stats <<- 
-    ddply(na.omit(index_melt), .(month, year), summarize, 
-          Mean = round(mean(value), 6), 
-          Standard_Deviation = round(sd(value), 6),
-          variance = round(var(value), 6),
-          Variability_Coefficient = round(sd(value)/mean(value), 6),
-          IQR = round(IQR(value), 6),
-          Lowest_value = round(min(value), 6),
-          Highest_value = round(max(value), 6),
-          Kurtosis = round(kurtosis(value), 6),
-          Skewness = round(skewness(value), 6)
-    )
-  
-}
 
 # UNIVARIATE SUMMARY FUNCTION
-raster_stack_univariate <- function(raster_melt){
+raster_stack_univariate <- function(raster_df_melt){
   
-  year_univariate <<- raster_melt %>%  
+  year_univariate <<- raster_df_melt %>%  
     dplyr::group_by(year) %>% 
     descr(value)
   
-  month_univariate <<- raster_melt %>%  
+  month_univariate <<- raster_df_melt %>%  
     dplyr::group_by(month) %>% 
     descr(value)
   
-  season_univariate <<- raster_melt %>%  
+  season_univariate <<- raster_df_melt %>%  
     dplyr::group_by(season) %>% 
     descr(value)
-  
 }
 
+raster_stack_univariate(index_melt_df)
 
 
 # T-TEST FUNCTION
@@ -84,14 +69,4 @@ raster_ttest <- function(raster_df_select, month){
   }
 }
 
-# raster_ttest(ndvi_df_melt, '04')
-
-
-
-# TESTING PROCESSING LOAD
-# library(microbenchmark)
-# microbenchmark(multitemporal_stacker("B01", "Xochimilco", 'ROI'), times = 5)
-
-save(index_univariate_stats, raster_stack_univariate, raster_ttest, 
-     file = '~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/INDEX_UNIVARIATE.RData')
-
+raster_ttest(index_melt_df, '04')
