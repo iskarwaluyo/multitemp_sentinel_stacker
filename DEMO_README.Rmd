@@ -1,0 +1,223 @@
+---
+title: "Multitemporal Raster Stacker for Sentinel 2A Demo and Overview"
+author: "Iskar Waluyo"
+date: "2023-09-25"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(xml2)
+library(raster)
+library(sf)
+library(geojsonio)
+library(colorspace)
+library(ggplot2)
+library(rasterVis)
+library(data.table)
+library(dplyr)
+library(gridExtra)
+library(plyr)
+library(summarytools)
+library(moments)
+library(tidyverse)
+library(broom)
+
+load('~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/RASTER_STACK.RData')
+load('~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/INDEX_SCORES.RData')
+load('~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/INDEX_MELT.RData')
+load('~/sigdata/archivos2/sigdata/PROYECTOS/MULTITEMPSTACKER/DATA/RDATA/INDEX_UNIVARIATE.RData')
+
+```
+# OVERVIEW
+
+This is a demo of the code used to create and analyze multitemporal stacks of Sentinel 2A data and corresponding spectral index calculations. This code was published in [Advances in Geospatial Data Science](https://link.springer.com/conference/igisc) presented in the 2023  [IGISc](https://igisc.org/) under the title "Estimating land cover changes using multi-temporal spectral index raster stacks in protected national areas of Xochimilco". This code is open source, but please cite any use of the code. 
+
+Waluyo, I., (2023). Estimating land cover changes using multi-temporal spectral index raster stacks in protected national areas of Xochimilco. Advances in Geospatial Data Science.
+
+The scripts are divided in four parts:
+
+1. 01_RASTER_STACK.R - Searches for all Sentinel2A data in a directory and creates stacks based on the sensing dates for each of the bandwidths included in Sentinel2A data. 
+2. 02_INDEX_CALCULATION.R - Calculates vegetation indexes (ndvi, evi, avi, savi), Soil indexes (bsi), Water indexes (ndmi, ndwi) and Built environment indexes (baei, ui, ndbi, mbi).
+3. 03_INDEX_MULTITEMPORAL_RASTER_DATA_EXPLORE.R - Creates data.frame of the raster data of each of the multitemporal stacks and visualizations to compare results.
+4. 04_INDEX_MULTITEMPORAL_UNIVARIATE_STATISTICS.R - Creates tables that compare the mean index values by month, year and season.
+
+## PART 0: Directory and data setup
+
+### Directory setup
+
+Before running the code, it is recommended to set up a project directory with 3 sub directories as follows, although, the code can be adjusted as the user prefers. 
+
+- Directory 0: Project directory 
+- Directory 1: Create a directory named 'RASTER' where user stores all downloaded Sentinel2A files. 
+- Directory 2: Create a directory named 'SIG' where user stores shape files of the region of interest (ROI) that are used to clip the raster images
+- Directory 3: Create a directory named 'RDATA' where the code will save RData files contaning objects of each step
+
+The first lines of the first script set up these directories as follows:
+
+```{r, eval = FALSE, echo = FALSE}
+# DIRECTORY 0: PROJECT DIRECTORY
+main_dir <- "CONTAINS R SCRIPTS AND DATA"
+
+# DIRECTORY 1: RASTER DATA DIRECTORY
+raster_dir <- "CONTAINS SENTINEL 2A RASTERS"
+
+# DIRECTORY 2: GIS DATA DIRECTORY
+sig_dir <- "CONTAINS REGION OF INTEREST VECTOR DATA"
+
+# DIRECTORY TO STORE RESULTS
+results_dir <- "CONTAINS SCRIPS RESULTS"
+```
+
+Directories can have different names, but be sure to adjust the code to read the files. 
+
+### Data setup
+
+Download and decompress Sentinel 2A data into the 'RASTER' directory. The demo uses 34 Sentinel 2A MSI level 1-C images downloaded from Copernicus Hub from orbit 69 between 2015 and 2023, with a maximum cloud coverage of 10%. 
+
+Download demo raster data: [DEMO_RASTER DATA]()
+Download demo GIS data: [DEMO GIS DATA](https://drive.google.com/file/d/1sDa7dLhdUKk3AytIihkT5dZwX6pB-ieY/view?usp=sharing)
+Download demo RData data: [DEMO RDATA](https://drive.google.com/file/d/1hxbWovXeKH0vcjZcxpSC1ozv-l9XWC-R/view?usp=sharing)
+
+For more information about Sentinel 2A level 1-C images: [SENTINEL 2A](https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi/product-types/level-1c)
+
+Create a shape file of the boundaries of your region of interest and save it to the 'SIG' directory. The shape file provided for the demo is for the Ejidos of Xochimilco and San Gregorio Atlapulco in Xochimilco, Mexico City. 
+
+Download sample ROI shape file: [LINK]
+
+All R scripts should be placed in the project directory. Remember to configure your directories as explained above. 
+
+## PART I: Multitemporal Stack Tools for Sentinel 2 images
+
+RUN SCRIPT: 01_RASTER_STACK.R
+
+This first part of code searches a directory for Sentinel 2A multispectral data, extracts the raster images and stacks them according to sensing timestamp. This is done by extracting time sensing dates from the meta data and using the 'raster' package to restack all the images of a chosen badwidth in one multi-temporal stack. This is programmed into a function called 'multitemporal_stacker' which accepts three arguments:
+
+- band - Bandwidth of interest. Can be any of the bandwiths included in Sentinel2A images (B01, B02, B03, B04, B05, B06, B07, B08, B08A, B09, B10, B11 or B12)
+- file_dir - Sentinel2A image directory inside of the RASTER directory where the images are stored. NOTE: do not modify the contents of the Sentinel2A images. 
+- roi - Name of shape file in the SIG directory that will be used to clip the Sentinel2A raster files.
+- number of cores to use during processing
+
+```{r multitemporal_stacker}
+all_bands <- c('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 
+               'B09', 'B10', 'B11', 'B12')
+
+setwd(sig_dir)
+ROI <- geojson_sf('ROI.geojson')
+ROI <- as_Spatial(ROI)
+
+multitemporal_stacker(all_bands, raster_dir, "Xochimilco", ROI)
+```
+
+Since Setinel2A bandwidth data has different resolution. Use the 'resample' command from the raster package to use the same resolution in all stacks. In this example, B02 is used as the reference.
+
+
+Now multitemporal stacks for each Sentinel2A bandwidth have been created and can be used to create color plots using the 'color_plot_singles' function also created with the 01_RASTER_STACK.R script. 
+
+```{r}
+# EXAMPLE
+color_plots(1) # RGB PLOTS OF FIRST LAYER OF STACK
+color_plots(2) # RGB PLOTS OF SEDOND LAYER OF STACK
+```
+
+## PART II: Calculate Spectral Indexes
+
+RUN SCRIPT: 02_INDEX_CALCULATION.R
+
+The script creates two functions to facilitate resampling and index calculation. 
+
+The resample_stack command, transforms all band layers to the same resolution of a reference layer using . The example uses 'B02' Sentinel 2A layer as the reference layer, thus all other layers are resampled to have the same resolution as 'B02'. 
+
+```{r}
+resample_stack('B02')
+```
+
+
+The index_calulator, simply calcualtes each index and create a plot for the results. It uses the 'colorspace' package for pallette selection. The returned R object is a list that contains a dataframe with index values for the cropped raster images for any given layer of the brick stack. In this case, the brick_stack contains 34 layers corresponding to 34 Sentinel 2A images. The code below calculates and plots index results for image 13 of 34.
+
+```{r}
+par(mfrow=c(3,3), mai = c(0.2, 0.1, 0.2, 0.1))
+index_calculator('ndvi', 13, 'sequential_hcl', 'Terrain', TRUE, 100)
+index_calculator('savi', 13, 'sequential_hcl', 'Turku', TRUE, 100)
+index_calculator('bsi', 13, 'diverge_hcl', 'Tofino', FALSE, 100)
+index_calculator('ndmi', 13, 'diverge_hcl', 'Blue-Red', TRUE, 100)
+index_calculator('ndwi', 13, 'diverge_hcl', 'Blue-Red', TRUE, 100)
+index_calculator('ui', 13, 'diverge_hcl', 'Lisbon', FALSE, 100)
+index_calculator('mbi', 13, 'diverge_hcl', 'Berlin', FALSE, 100)
+index_calculator('ndbi', 13, 'diverge_hcl', 'Vik', FALSE, 100)
+index_calculator('baei', 13, 'diverge_hcl', 'Cyan-Magenta', FALSE, 100)
+```
+## PART III: Multi-temporal Stack Data Exploration
+
+RUN SCRIPT: 03_INDEX_MULTITEMPORAL_RASTER_DATA_EXPLORE.R
+
+The index_time_melt transform any of the index results from the last code into long format that uses year and month as factor columns extracted from each layers meta data. It also takes a second argument called "rainy_months" in the example below. The rainy months are the months that are considered rainy season in Mexico City. This allows comparing groups of months in this case for rainy seasons, but could be any other grouping. 
+
+```{r index_melts}
+rainy_months = c('05', '06', '07', '08', '09', '10')
+index_time_melt('baei', rainy_months, 'High percipitation', 'Low percipitation')
+```
+The script creates the following 8 R objects. 
+```{r}
+year_melt
+year_season_melt
+year_month_melt
+season_melt
+
+signature_plots_month
+signature_plots_season_year
+signature_plots_month_year
+
+mean_comparison_year
+mean_comparison_year_month
+```
+
+### Plotting some results.
+
+This script also creates 'index_signature_grids', 'index_month_compare', 'index_month_year' and 'index_season_year' that create plots to visually compare index values by year, month and season. It accepts to arguments: the index of interest and TRUE or FALSE to determine if seasonal density plots are to be created as well.
+
+```{r}
+# USES THE INDEX SPATIAL DATA
+# TRUE INCLUDES 'SEASONAL'SEASON' VALUE, FALSE EXCLUDES 'SEASON' LABEL
+
+index_signature_grids("ndvi", TRUE)
+ndvi_signature_plots_month
+ndvi_signature_plots_season
+```
+
+```{r}
+# USES THE INDEX DATA IN LONG FORMAT
+index_month_year(ndvi_df_melt, "NDVI")
+index_season_year(ndvi_df_melt, "NDVI")
+```
+## PART IV: Univariate statistics
+
+RUN SCRIPT: 04_INDEX_MULTITEMPORAL_UNIVARIATE_STATISTICS.R
+
+Finally, the following scripts use univariate statistics to compare the values of the indexes by month, year and season. The function 'index_univariate_stats' creates a dataframe that compares al data by month and year. For brevity only NDVI is demonstrated.
+
+\small
+```{r univariate_stats, tidy.opts = list(width.cutoff = 300), tidy = TRUE}
+raster_stack_univariate(index_melt_df)
+```
+\normalsize
+
+The function creates year, month and season univariate statistics for the index of choice. In this case for 'baei'. 
+
+```{r}
+year_univariate
+month_univariate
+season_univariate
+```
+
+The 'raster_ttest' uses the long format data of the rasters to perform a t-test of the mean index values for any given month by years. This code statistically compares each month by year. For brevity only NDVI is compared for months of April and November. It's worth noting that this compares all data of years available. If there is no data available for any given year, it will not appear in the results. 
+
+```{r}
+raster_ttest(index_melt_df, '04')
+raster_ttest(index_melt_df, '11')
+setwd(main_dir)
+```
