@@ -10,6 +10,7 @@ The scripts are divided in four parts:
 2. 02_INDEX_CALCULATION.R - Calculates vegetation indexes (ndvi, evi, avi, savi), Soil indexes (bsi), Water indexes (ndmi, ndwi) and Built environment indexes (baei, ui, ndbi, mbi).
 3. 03_INDEX_MULTITEMPORAL_RASTER_DATA_EXPLORE.R - Creates data.frame of the raster data of each of the multitemporal stacks and visualizations to compare results.
 4. 04_INDEX_MULTITEMPORAL_UNIVARIATE_STATISTICS.R - Creates tables that compare the mean index values by month, year and season.
+5. 05_
 
 ## PART 0: Directory and data setup
 
