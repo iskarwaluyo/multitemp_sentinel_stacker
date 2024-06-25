@@ -31,15 +31,14 @@ multitemporal_stacker <- function(bands, raster_dir, file_dir, roi, cores){
   dir_list <- ''
   dir_list <- list.files(pattern='', full.names=TRUE)
   files <- ''
-
+  time_line <<- ''
   for(i in 1:length(dir_list)){
-    time_line <- ''
     setwd(raster_dir)
     setwd(paste0('./', file_dir, '/'))
     setwd(dir_list[i])
-    raster_data <- read_xml('MTD_MSIL1C.xml')
+    raster_data <<- read_xml('MTD_MSIL1C.xml')
     raster_time <- xml_text(xml_find_all(raster_data, '//PRODUCT_START_TIME'))
-    time_line[i] <- lapply(raster_time, substr, 1, 10) 
+    time_line[i] <<- lapply(raster_time, substr, 1, 10) 
 
     setwd(raster_dir)
     setwd(paste0('./', file_dir, '/'))
@@ -59,10 +58,8 @@ multitemporal_stacker <- function(bands, raster_dir, file_dir, roi, cores){
   # SET CRS/PROJECTION
   crs(ROI) <- st_crs(bricks)
 
-  plan(multicore, workers = cores)
-  
-  bstack <- future_lapply(bricks, crop, ROI, future.seed = T)
-  bstack_clip <- future_lapply(bstack, mask, ROI, future.seed = T)
+  bstack <- lapply(bricks, crop, ROI, future.seed = T)
+  bstack_clip <- lapply(bstack, mask, ROI, future.seed = T)
 
   brick_stack[j] <<- stack(bstack_clip)
 
@@ -76,10 +73,10 @@ all_bands <- c('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A',
                'B09', 'B10', 'B11', 'B12')
 
 setwd(sig_dir)
-ROI <- geojson_sf('ROI.geojson')
+ROI <- geojson_sf('MCROI.geojson')
 ROI <- as_Spatial(ROI)
 
-multitemporal_stacker(all_bands, raster_dir, "Xochimilco", ROI, 6)
+multitemporal_stacker(all_bands, raster_dir, "Marques_Comillas_YU", ROI)
 
 
 color_plots <- function(img_number)
