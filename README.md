@@ -54,7 +54,7 @@ For more information about Sentinel 2A level 1-C images: [SENTINEL 2A](https://s
 
 Create a shape file of the boundaries of your region of interest and save it to the 'SIG' directory. The shape file provided for the demo is for the Ejidos of Xochimilco and San Gregorio Atlapulco in Xochimilco, Mexico City. 
 
-Download sample ROI shape file: [LINK]
+Download sample ROI shape file: [LINK](https://raw.githubusercontent.com/iskarwaluyo/multitemp_sentinel_stacker/main/ROI.geojson)
 
 All R scripts should be placed in the project directory. Remember to configure your directories as explained above. 
 
